@@ -1,0 +1,89 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
+USE `mydb` ;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`table1`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`table1` (
+)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`table2`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`table2` (
+)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`table3`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`table3` (
+)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`Users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`Users` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `first_name` VARCHAR(50) NOT NULL,
+  `last_name` VARCHAR(50) NOT NULL,
+  `email` VARCHAR(100) NOT NULL,
+  `phone` VARCHAR(20) BINARY NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`Roles`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`Roles` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(50) NOT NULL,
+  `permissions` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`UserRoles`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`UserRoles` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `roles_id` BIGINT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_UserRoles_Roles1_idx` (`roles_id` ASC) VISIBLE,
+  CONSTRAINT `fk_UserRoles_Roles1`
+    FOREIGN KEY (`roles_id`)
+    REFERENCES `mydb`.`Roles` (`id`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_UserRoles_Users`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `mydb`.`Users` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
