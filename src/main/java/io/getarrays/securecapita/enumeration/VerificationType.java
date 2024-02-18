@@ -6,9 +6,10 @@ public enum VerificationType {
 
     private final String type;
 
-    VerificationType(String type){this.type = type;}
+    VerificationType(String type) { this.type = type; }
 
     public String getType() {
         return this.type.toLowerCase();
     }
 }
+

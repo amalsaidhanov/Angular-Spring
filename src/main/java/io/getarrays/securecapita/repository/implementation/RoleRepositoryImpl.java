@@ -3,7 +3,7 @@ package io.getarrays.securecapita.repository.implementation;
 import io.getarrays.securecapita.domain.Role;
 import io.getarrays.securecapita.exception.Apiexception;
 import io.getarrays.securecapita.repository.RoleRepository;
-import io.getarrays.securecapita.rolemapper.RoleRowMapper;
+import io.getarrays.securecapita.mapper.rowmapper.rolemapper.RoleRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 
-import static io.getarrays.securecapita.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
-import static io.getarrays.securecapita.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
+import static io.getarrays.securecapita.enumeration.RoleType.ROLE_USER;
+import static io.getarrays.securecapita.query.RoleQuery.*;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 
@@ -22,8 +22,6 @@ import static java.util.Objects.requireNonNull;
 @RequiredArgsConstructor
 @Slf4j
 public class RoleRepositoryImpl implements RoleRepository<Role> {
-
-
     private final NamedParameterJdbcTemplate jdbc;
 
 
@@ -60,12 +58,9 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
         try {
             Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, of("roleName", roleName), new RoleRowMapper());
             jdbc.update(INSERT_ROLE_TO_USER_QUERY, of("userId", userId, "roleId", requireNonNull(role).getId()));
-
         } catch (EmptyResultDataAccessException exception) {
-            log.error("No role found by name: {}", roleName);
-            throw new Apiexception("No role found by name " + roleName);
+            throw new Apiexception("No role found by name " + ROLE_USER.name());
         } catch (DataAccessException exception) {
-            log.error("An error occurred while adding role to user", exception);
             throw new Apiexception("An error occurred. Please try again");
         }
 
@@ -73,7 +68,15 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
 
     @Override
     public Role getRoleByUserId(Long userId) {
-        return null;
+        log.info("Adding role {} to user id: {}", of("id",userId), userId);
+
+        try {
+            return jdbc.queryForObject(SELECT_ROLE_BY_ID_QUERY,of("id",userId),new RoleRowMapper());
+        } catch (EmptyResultDataAccessException exception) {
+            throw new Apiexception("No role found by name " + ROLE_USER.name());
+        } catch (DataAccessException exception) {
+            throw new Apiexception("An error occurred. Please try again");
+        }
     }
 
     @Override
@@ -82,7 +85,5 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
     }
 
     @Override
-    public void updateUser(Long userId, String roleName) {
-
-    }
+    public void updateUser(Long userId, String roleName) {}
 }

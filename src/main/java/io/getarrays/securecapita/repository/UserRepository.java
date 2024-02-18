@@ -4,6 +4,7 @@ import io.getarrays.securecapita.domain.User;
 import io.getarrays.securecapita.dto.UserDTO;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * @author Amal
@@ -16,11 +17,11 @@ public interface UserRepository<T extends User> {
 
     Collection<UserDTO> list(int page, int pageSize);
 
-    T get(Long id);
-
     T update(T data);
 
     Boolean delete(Long id);
+
+    User getUserByEmail(String email);
 
     /*More Complex*/
 

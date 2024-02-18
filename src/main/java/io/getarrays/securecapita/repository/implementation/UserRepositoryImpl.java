@@ -2,18 +2,24 @@ package io.getarrays.securecapita.repository.implementation;
 
 import io.getarrays.securecapita.domain.Role;
 import io.getarrays.securecapita.domain.User;
+import io.getarrays.securecapita.domain.UserPrincipal;
 import io.getarrays.securecapita.dto.UserDTO;
 import io.getarrays.securecapita.exception.Apiexception;
 import io.getarrays.securecapita.repository.RoleRepository;
 import io.getarrays.securecapita.repository.UserRepository;
+import io.getarrays.securecapita.mapper.rowmapper.usermapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -30,7 +36,7 @@ import static java.util.Objects.requireNonNull;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepository<User> {
+public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
@@ -44,7 +50,6 @@ public class UserRepositoryImpl implements UserRepository<User> {
         ///////////////Save new user/////////////
         try {
             KeyHolder holder = new GeneratedKeyHolder();
-
             SqlParameterSource parameters = getSqlParameterSource(user);
             jdbc.update(INSERT_USER_QUERY, parameters, holder);
             user.setId(requireNonNull(holder.getKey()).longValue());
@@ -55,18 +60,17 @@ public class UserRepositoryImpl implements UserRepository<User> {
             //Save URL in verification table
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, of("userId", user.getId(), "url", verificationURl));
             //Send email to user with verifications URL
-            //emailService.sendVerificationUrl(user.getFirstName(),user.getEmail(),verificationURl,ACCOUNT);
+//            emailService.sendVerificationUrl(user.getFirstName(),user.getEmail(),verificationURl,ACCOUNT.getType());
             user.setEnabled(false);
             user.setNotLocked(true);
-            return user;
             //return the newly created user
+            return user;
             //if any errors throw exception with proper message
-        } catch (DataAccessException exception) {
-            log.error("An error occurred. Please try again", exception);
-            exception.printStackTrace();
+        } catch (EmptyResultDataAccessException exception) {
+            throw new Apiexception("No role found by name:" + ROLE_USER.name());
+        } catch (Exception exception) {
             throw new Apiexception("An error occurred. Please try again");
         }
-
     }
 
     @Override
@@ -95,25 +99,20 @@ public class UserRepositoryImpl implements UserRepository<User> {
             return users;
         });
     }
-
     @Override
-    public User get(Long id) {
-        return null;
+    public User update(User updateRequest) {
+        return updateRequest;
     }
 
-    @Override
-    public User update(User data) {
-        return null;
-    }
 
     @Override
     public Boolean delete(Long id) {
-        return null;
+        Map<String, Object> paramMap = Collections.singletonMap("id", id);
+        int rowsAffected = jdbc.update(DELETE_USER_BY_ID_QUERY, paramMap);
+        return rowsAffected > 0;
     }
 
-
     private String getVerificationUrl(String key, String type) {
-
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
     }
 
@@ -121,8 +120,40 @@ public class UserRepositoryImpl implements UserRepository<User> {
         return new MapSqlParameterSource().addValue("firstName", user.getFirstName()).addValue("lastName", user.getLastName()).addValue("email", user.getEmail()).addValue("password", encoder.encode(user.getPassword()));
     }
 
-
     private Integer getEmailCount(String email) {
         return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, of("email", email), Integer.class);
+    }
+
+    public User selectUserById(Long id) {
+        String query = "SELECT * FROM users WHERE id = :id";
+        MapSqlParameterSource params = new MapSqlParameterSource().addValue("id", id);
+        return jdbc.queryForObject(query, params, new UserRowMapper());
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = getUserByEmail(email);
+        if (user == null) {
+            log.info("User not found in database: {}", email);
+            throw new UsernameNotFoundException("User not found in database: " + email);
+        } else {
+            log.info("User found in database: {}", email);
+            return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()).getPermission());
+        }
+    }
+
+
+    @Override
+    public User getUserByEmail(String email) {
+        try {
+            User user = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, of("email", email), new UserRowMapper());
+            return user;
+        } catch (EmptyResultDataAccessException exception) {
+            log.error(exception.getMessage());
+            throw new Apiexception("No user found by email:" + email);
+        } catch (DataAccessException exception) {
+            log.error(exception.getMessage());
+            throw new Apiexception("An error occurred. Please try again");
+        }
     }
 }
