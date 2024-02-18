@@ -16,24 +16,6 @@ public class UserQuery {
     public static final String
             SELECT_ONE_USER_QUERY =
             "SELECT * FROM Users WHERE id = :id";
-    public static final String UPDATE_USER_QUERY =
-            "UPDATE users " +
-                    "SET " +
-                    "  first_name = ?, " +
-                    "  last_name = ?, " +
-                    "  email = ?, " +
-                    "  password = ?, " +
-                    "  address = ?, " +
-                    "  phone = ?, " +
-                    "  title = ?, " +
-                    "  bio = ?, " +
-                    "  image_url = ?, " +
-                    "  enabled = ?, " +
-                    "  is_not_locked = ?, " +
-                    "  is_using_mfa = ?, " +
-                    "  created_at = ? " +
-                    "WHERE " +
-                    "  id = ?";
 
     public static final String
             DELETE_USER_BY_ID_QUERY = "DELETE FROM Users WHERE id = :id";

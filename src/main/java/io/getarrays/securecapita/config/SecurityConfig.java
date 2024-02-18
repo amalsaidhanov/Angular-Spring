@@ -25,6 +25,7 @@ import java.util.List;
 import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.OPTIONS;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
 @RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity()

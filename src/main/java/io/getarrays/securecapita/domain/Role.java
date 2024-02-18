@@ -16,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+
 public class Role {
     @Id
     private Long id;

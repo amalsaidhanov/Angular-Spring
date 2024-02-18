@@ -5,6 +5,7 @@ import io.getarrays.securecapita.domain.User;
 import io.getarrays.securecapita.domain.UserPrincipal;
 import io.getarrays.securecapita.dto.UserDTO;
 import io.getarrays.securecapita.exception.Apiexception;
+import io.getarrays.securecapita.mapper.dtomapper.userdtomapper.UserDTOMapper;
 import io.getarrays.securecapita.repository.RoleRepository;
 import io.getarrays.securecapita.repository.UserRepository;
 import io.getarrays.securecapita.mapper.rowmapper.usermapper.UserRowMapper;
@@ -44,28 +45,21 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
     @Override
     public User create(User user) {
-        ///////////////Check the email is unique/////////////
         if (getEmailCount(user.getEmail().trim().toLowerCase()) > 0)
             throw new Apiexception("Email already in use, Please use a different email and try again.");
-        ///////////////Save new user/////////////
         try {
             KeyHolder holder = new GeneratedKeyHolder();
             SqlParameterSource parameters = getSqlParameterSource(user);
             jdbc.update(INSERT_USER_QUERY, parameters, holder);
             user.setId(requireNonNull(holder.getKey()).longValue());
-            /////////////Add role to the user/////////////
             roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
-            ///////////////Send verifications URL/////////////
             String verificationURl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
-            //Save URL in verification table
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, of("userId", user.getId(), "url", verificationURl));
             //Send email to user with verifications URL
 //            emailService.sendVerificationUrl(user.getFirstName(),user.getEmail(),verificationURl,ACCOUNT.getType());
             user.setEnabled(false);
             user.setNotLocked(true);
-            //return the newly created user
             return user;
-            //if any errors throw exception with proper message
         } catch (EmptyResultDataAccessException exception) {
             throw new Apiexception("No role found by name:" + ROLE_USER.name());
         } catch (Exception exception) {
@@ -79,26 +73,13 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         params.put("pageSize", pageSize);
         params.put("offset", (page - 1) * pageSize);
 
+        UserRowMapper userRowMapper = new UserRowMapper(); // Создаем экземпляр UserRowMapper
         return jdbc.query(SELECT_ALL_USERS_QUERY, params, (rs, rowNum) -> {
-            UserDTO users = new UserDTO();
-
-            users.setId(rs.getLong("id"));
-            users.setFirstName(rs.getString("first_name"));
-            users.setLastName(rs.getString("last_name"));
-            users.setEmail(rs.getString("email"));
-            users.setAddress(rs.getString("address"));
-            users.setPhone(rs.getString("phone"));
-            users.setTitle(rs.getString("title"));
-            users.setBio(rs.getString("bio"));
-            users.setEnabled(rs.getBoolean("enabled"));
-            users.setNotLocked(rs.getBoolean("non_locked"));
-            users.setUsingMfa(rs.getBoolean("using_mfa"));
-            users.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            users.setImageUrl(rs.getString("image_url"));
-
-            return users;
+            User user = userRowMapper.mapRow(rs, rowNum); // Применяем UserRowMapper
+            return UserDTOMapper.fromUser(user);
         });
     }
+
     @Override
     public User update(User updateRequest) {
         return updateRequest;
@@ -146,8 +127,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     @Override
     public User getUserByEmail(String email) {
         try {
-            User user = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, of("email", email), new UserRowMapper());
-            return user;
+            return jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, of("email", email), new UserRowMapper());
         } catch (EmptyResultDataAccessException exception) {
             log.error(exception.getMessage());
             throw new Apiexception("No user found by email:" + email);

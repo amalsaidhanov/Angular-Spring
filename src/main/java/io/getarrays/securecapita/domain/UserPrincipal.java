@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toList;
  * @version 1.0
  * @since 2/16/24
  **/
+
 @RequiredArgsConstructor
 public class UserPrincipal implements UserDetails {
     private final User user;

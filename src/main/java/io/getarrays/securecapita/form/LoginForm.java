@@ -1,5 +1,6 @@
 package io.getarrays.securecapita.form;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
@@ -12,8 +13,9 @@ import lombok.Data;
  **/
 @Data
 public class LoginForm {
-    @NotEmpty
+    @NotEmpty(message = "email name cannot be empty")
+    @Email(message = "Invalid email. Please enter a valid email address")
     private String email;
-    @NotEmpty
+    @NotEmpty(message = "password name cannot be empty")
     private String password;
 }
