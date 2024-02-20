@@ -7,7 +7,6 @@ import io.getarrays.securecapita.dto.UserDTO;
 import io.getarrays.securecapita.form.LoginForm;
 import io.getarrays.securecapita.service.UserService;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,21 +34,22 @@ public class UserResource {
         // we can use own (new SecurecapitaAthentication)
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(),loginForm.getPassword()));
         UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(of("user", userDTO))
-                        .message("Login Success")
-                        .status(HttpStatus.OK)
-                        .statusCode(HttpStatus.OK.value())
-                        .build()
-        );
+        return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
+
+//        return ResponseEntity.ok().body(
+//                HttpResponse.builder()
+//                        .timeStamp(now().toString())
+//                        .data(of("user", userDTO))
+//                        .message("Login Success")
+//                        .status(HttpStatus.OK)
+//                        .statusCode(HttpStatus.OK.value())
+//                        .build()
+//        );
     }
 
     @PostMapping("/register")
     public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user) {
         UserDTO userDTO = userService.createUser((user));
-
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -61,8 +61,10 @@ public class UserResource {
         );
     }
 
+
+
     @GetMapping("/getall")
-    public Collection<UserDTO> getAllUsers(
+    public Collection<User> getAllUsers(
             @RequestParam(value = "page", defaultValue = "1") int page,
             @RequestParam(value = "pageSize", defaultValue = "10") int pageSize) {
         return userService.list(page, pageSize);
@@ -84,5 +86,27 @@ public class UserResource {
 
     private URI getUri() {
         return URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString());
+    }
+    private ResponseEntity<HttpResponse> sendResponse(UserDTO userDTO) {
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userDTO))
+                        .message("Login Success")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
+    }
+
+    private ResponseEntity<HttpResponse> sendVerificationCode(UserDTO userDTO) {
+        userService.sendVerification(userDTO);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userDTO))
+                        .message("Verification code sent")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build());
     }
 }

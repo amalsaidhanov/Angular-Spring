@@ -1,6 +1,7 @@
 package io.getarrays.securecapita.domain;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,7 +24,6 @@ import static java.util.stream.Collectors.toList;
 public class UserPrincipal implements UserDetails {
     private final User user;
     private final String permissions;
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return stream(permissions.split(",".trim())).map(SimpleGrantedAuthority::new).collect(toList());

@@ -1,5 +1,6 @@
 package io.getarrays.securecapita.config;
 
+import io.getarrays.securecapita.filter.CustomerFilter;
 import io.getarrays.securecapita.handler.CustomAccessDeniedHandler;
 import io.getarrays.securecapita.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.OPTIONS;
+import static org.springframework.http.HttpMethod.*;
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @RequiredArgsConstructor
@@ -61,6 +61,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(encoder);
+        return new ProviderManager(authProvider);
+    }
     //    @Bean
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //        http
@@ -79,13 +86,6 @@ public class SecurityConfig {
 //        http.addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 //        return http.build;
 //    }
-    @Bean
-    public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(encoder);
-        return new ProviderManager(authProvider);
-    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

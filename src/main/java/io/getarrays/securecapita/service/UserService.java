@@ -7,8 +7,8 @@ import java.util.Collection;
 
 public interface UserService {
     UserDTO createUser(User user);
-    Collection<UserDTO> list(int page, int pageSize);
-    void delete(Long id);
     UserDTO getUserByEmail(String email);
-
+    void sendVerification(UserDTO userDTO);
+    Collection<User> list(int page, int pageSize);
+    void delete(Long id);
 }

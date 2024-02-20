@@ -1,10 +1,8 @@
 package io.getarrays.securecapita.service.implementation;
 
-import io.getarrays.securecapita.domain.Role;
 import io.getarrays.securecapita.domain.User;
 import io.getarrays.securecapita.dto.UserDTO;
 import io.getarrays.securecapita.mapper.dtomapper.userdtomapper.UserDTOMapper;
-import io.getarrays.securecapita.repository.RoleRepository;
 import io.getarrays.securecapita.repository.UserRepository;
 import io.getarrays.securecapita.service.UserService;
 import jakarta.transaction.Transactional;
@@ -20,7 +18,6 @@ import static io.getarrays.securecapita.mapper.dtomapper.userdtomapper.UserDTOMa
 public class UserServiceImpl implements UserService {
 
     private final UserRepository<User> userRepository;
-    private final RoleRepository<Role> roleRoleRepository;
 
 
     @Override
@@ -29,20 +26,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Collection<UserDTO> list(int page, int pageSize) {
-//        logger.info("Trying to add!!!!!!!!!!!");
-        return userRepository.list(page, pageSize);
+    public UserDTO getUserByEmail(String email) {
+        return UserDTOMapper.fromUser(userRepository.getUserByEmail(email));
     }
 
+    @Override
+    public void sendVerification(UserDTO userDTO) {
+userRepository.sendVerificationCode(userDTO);
+    }
+
+    //
     @Override
     @Transactional
     public void delete(Long id) {
         userRepository.delete(id);
     }
-
     @Override
-    public UserDTO getUserByEmail(String email) {
-        return UserDTOMapper.fromUser(userRepository.getUserByEmail(email));
+    public Collection<User> list(int page, int pageSize) {
+        return userRepository.list(page, pageSize);
     }
-
 }

@@ -12,9 +12,18 @@ import java.util.Optional;
  * @since 21/12/2023
  **/
 public interface UserRepository<T extends User> {
+
     T create(T data);
-    Collection<UserDTO> list(int page, int pageSize);
+
+    Collection<T> list(int page, int pageSize);
+
+    T get(Long id);
+
     T update(T data);
+
     Boolean delete(Long id);
+
+    //complex
     User getUserByEmail(String email);
+    void sendVerificationCode(UserDTO userDTO);
 }
